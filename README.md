@@ -4,7 +4,7 @@
 
 Urządzenie pobiera `AircraftList.json` po Wi‑Fi, wybiera najbliższy samolot w zadanym promieniu i cyklicznie prezentuje dane na LCD. Ma też prosty panel WWW do konfiguracji bez ponownego wgrywania firmware.
 
-![Schemat podłączenia](docs/wiring.svg)
+![Schemat podłączenia](docs/wiring.png)
 
 ## Funkcje
 
