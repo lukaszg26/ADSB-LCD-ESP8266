@@ -1,6 +1,6 @@
 # ADSB-LCD-ESP8266
 
-Kolorowy projekt? Nie — celowo prosty i czytelny: **Wemos D1 mini (ESP8266) + LCD 16×2 I²C** pokazujący dane najbliższego samolotu z lokalnego **Virtual Radar Server (VRS)**.
+**Wemos D1 mini (ESP8266) + LCD 16×2 I²C** pokazujący dane najbliższego samolotu z lokalnego **Virtual Radar Server (VRS)**.
 
 Urządzenie pobiera `AircraftList.json` po Wi‑Fi, wybiera najbliższy samolot w zadanym promieniu i cyklicznie prezentuje dane na LCD. Ma też prosty panel WWW do konfiguracji bez ponownego wgrywania firmware.
 
