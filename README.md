@@ -1,73 +1,59 @@
 # ADSB-LCD-ESP8266
 
-**Wemos D1 mini (ESP8266) + LCD 16×2 I²C** pokazujący dane najbliższego samolotu z lokalnego **Virtual Radar Server (VRS)**.
+**Wemos D1 mini (ESP8266) + LCD 16×2 I²C** wyświetlający na żywo dane najbliższego samolotu z lokalnego **Virtual Radar Server (VRS)**.
 
-Urządzenie pobiera `AircraftList.json` po Wi‑Fi, wybiera najbliższy samolot w zadanym promieniu i cyklicznie prezentuje dane na LCD. Ma też prosty panel WWW do konfiguracji bez ponownego wgrywania firmware.
+Urządzenie pobiera `AircraftList.json` przez Wi‑Fi, wybiera najbliższy samolot w konfigurowanym promieniu i cyklicznie prezentuje jego dane na LCD. Konfiguracja, podgląd LCD, OTA i funkcje serwisowe są dostępne z wbudowanego panelu WWW.
 
 ![Schemat podłączenia](docs/wiring.png)
 
-## Funkcje
+## Aktualna wersja
 
-- pobieranie danych z lokalnego Virtual Radar Server (`AircraftList.json`)
-- wybór najbliższego samolotu według pola `Dst`
-- 8 ekranów LCD, każdy może być osobno włączony/wyłączony
-- czas wyświetlania ekranów konfigurowany z WWW
-- pełny model samolotu i operator
+**v16.0** — aktualna wersja rozwojowa firmware.
+
+Starsza, stabilna wersja **v14.1** pozostaje dostępna:
+
+- w katalogu [`firmware/releases/v14.1/`](firmware/releases/v14.1/)
+- na gałęzi [`v14.1-stable`](../../tree/v14.1-stable)
+
+Pełna historia zmian: [CHANGELOG.md](CHANGELOG.md).
+
+## Najważniejsze funkcje
+
+- pobieranie danych z lokalnego VRS (`AircraftList.json`)
+- wybór najbliższego samolotu według `Dst`
+- **9 ekranów LCD**
+- pełna nazwa modelu i operator
 - callsign i rejestracja
 - species i engines
-- odległość oraz `INCOMING` / `OUTCOMING`
-- prędkość w km/h oraz węzłach
+- odległość + `INCOMING / OUTCOMING`
+- prędkość w km/h i węzłach
 - Flight Level
-- heading/track i bearing wraz z kierunkami N/NE/E/SE/S/SW/W/NW
+- heading/track i bearing z kierunkami świata
 - ICAO i squawk
-- liczba wszystkich samolotów śledzonych przez VRS (`totalAc`)
-- animacja **NOWY NAJBLIŻSZY**
-- alarm LPR: 3× miganie LCD, gdy LPR zostanie nowym najbliższym samolotem
-- automatyczne wygaszanie podświetlenia, domyślnie 21:00–06:00
-- czas lokalny wyliczany z pola `stm` VRS z obsługą CET/CEST
-- prosty panel WWW z zapisem ustawień do LittleFS
+- ekran **TRASA** z pól VRS `From`, `Stops`, `To`
+- liczba wszystkich samolotów VRS (`totalAc`)
+- animacja **NOWY NAJBLIZSZY**
+- alert LPR z konfigurowanym miganiem podświetlenia
+- nocne wygaszanie LCD
+- czas polski CET/CEST wyliczany na podstawie `stm` z VRS
+- konfiguracja zapisywana w LittleFS
 - mDNS: `http://adsb-display.local/`
 
-## Wymagania
+### Nowości v16
 
-### Hardware
+- **podgląd fizycznego LCD 16×2 w panelu WWW**
+- przyciski WWW: następny ekran, LCD AUTO/ON/OFF, test LPR, restart
+- **OTA przez WWW** pod `/update`
+- **MQTT + Home Assistant MQTT Discovery**
+- profile wyświetlania: `CUSTOM`, `NORMAL`, `MINIMAL`, `SPOTTER`, `FULL`
+
+## Hardware
 
 - Wemos D1 mini / ESP8266
 - LCD 16×2 HD44780
-- konwerter I²C PCF8574, najczęściej adres `0x27`
+- konwerter I²C PCF8574, zwykle `0x27`
 - przewody połączeniowe
-- lokalny odbiornik ADS-B + Virtual Radar Server
-
-### Arduino IDE
-
-Wybierz płytkę:
-
-```text
-LOLIN(WEMOS) D1 R2 & mini
-```
-
-Zalecane ustawienie pamięci flash:
-
-```text
-4MB (FS:2MB OTA:~1019KB)
-```
-
-Port szeregowy:
-
-```text
-115200 baud
-```
-
-### Biblioteki
-
-Zainstaluj:
-
-- **ArduinoJson 7.x**
-- **LiquidCrystal_I2C** kompatybilną z ESP8266
-
-Pozostałe biblioteki (`ESP8266WiFi`, `ESP8266HTTPClient`, `ESP8266WebServer`, `ESP8266mDNS`, `LittleFS`) są częścią pakietu ESP8266 dla Arduino IDE.
-
-> Niektóre wydania `LiquidCrystal_I2C` mogą wyświetlać ostrzeżenie o architekturze AVR. Jeżeli szkic się kompiluje i LCD działa, samo ostrzeżenie nie jest błędem wykonania.
+- lokalny odbiornik ADS‑B + Virtual Radar Server
 
 ## Podłączenie
 
@@ -80,25 +66,58 @@ Pozostałe biblioteki (`ESP8266WiFi`, `ESP8266HTTPClient`, `ESP8266WebServer`, `
 
 Jeżeli LCD nie odpowiada pod `0x27`, sprawdź również `0x3F`.
 
-## Instalacja
+## Arduino IDE
 
-1. Pobierz repozytorium.
-2. Otwórz:
+Płytka:
 
 ```text
-firmware/ADSB_LCD_Display/ADSB_LCD_Display.ino
+LOLIN(WEMOS) D1 R2 & mini
 ```
 
-3. Wpisz dane Wi‑Fi:
+Zalecany układ flash:
+
+```text
+4MB (FS:2MB OTA:~1019KB)
+```
+
+Serial Monitor:
+
+```text
+115200 baud
+```
+
+### Biblioteki
+
+Zainstaluj:
+
+- **ArduinoJson 7.x**
+- **LiquidCrystal_I2C** kompatybilną z ESP8266
+- **PubSubClient by Nick O'Leary** — wymagane w v16 dla MQTT
+
+Pozostałe biblioteki (`ESP8266WiFi`, `ESP8266HTTPClient`, `ESP8266WebServer`, `ESP8266HTTPUpdateServer`, `ESP8266mDNS`, `LittleFS`) są częścią pakietu ESP8266 dla Arduino IDE.
+
+> Niektóre wersje `LiquidCrystal_I2C` wyświetlają ostrzeżenie dotyczące architektury AVR. Jeżeli projekt się kompiluje i LCD działa, samo ostrzeżenie nie jest błędem wykonania.
+
+## Instalacja
+
+1. Pobierz lub sklonuj repozytorium.
+2. Otwórz aktualny firmware z katalogu `firmware/ADSB_LCD_Display/`.
+3. Ustaw dane Wi‑Fi:
 
 ```cpp
 const char* WIFI_SSID = "YOUR_WIFI_SSID";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
 ```
 
-4. Wgraj firmware do D1 mini.
-5. Otwórz Serial Monitor na `115200`.
-6. Po połączeniu z Wi‑Fi otwórz:
+4. Zmień domyślne hasło OTA:
+
+```cpp
+const char* OTA_PASSWORD = "CHANGE_ME_NOW";
+```
+
+5. Skompiluj i wgraj firmware do D1 mini.
+6. Otwórz Serial Monitor na `115200`.
+7. Wejdź na:
 
 ```text
 http://adsb-display.local/
@@ -106,132 +125,111 @@ http://adsb-display.local/
 
 Jeżeli mDNS nie działa w Twojej sieci, użyj adresu IP pokazanego w Serial Monitorze.
 
-## Konfiguracja WWW
+## Panel WWW
 
 W panelu można ustawić m.in.:
 
 - URL `AircraftList.json`
 - pozycję odbiornika (`lat`, `lon`)
-- maksymalny promień wyboru najbliższego samolotu
+- promień wyboru najbliższego samolotu
 - częstotliwość pobierania danych VRS
-- czas wyświetlania pojedynczego ekranu
-- nocne wygaszanie LCD i godziny ON/OFF
-- alarm LPR i liczbę mignięć
+- czas wyświetlania ekranów
+- nocne wygaszanie LCD
+- alert LPR
 - próg `INCOMING / OUTCOMING`
-- włączanie/wyłączanie każdego z 8 ekranów
+- włączanie/wyłączanie ekranów
+- profil wyświetlania
+- ustawienia MQTT
 
-Ustawienia są zapisywane w LittleFS do `/config.json` i pozostają po restarcie.
+Ustawienia są zapisywane w LittleFS do `/config.json`.
 
-## Konfiguracja Virtual Radar Server
+## Podgląd LCD i sterowanie WWW
 
-Firmware korzysta z endpointu:
+v16 pokazuje w przeglądarce aktualną zawartość fizycznego LCD 16×2. Dostępne są także:
+
+- następny ekran
+- LCD `AUTO`
+- LCD `ON`
+- LCD `OFF`
+- test alarmu LPR
+- restart ESP8266
+
+## OTA przez WWW
+
+Strona aktualizacji firmware:
 
 ```text
-http://ADRES_VRS:8090/VirtualRadar/AircraftList.json
+http://adsb-display.local/update
 ```
 
-Do zapytania dodawane są współrzędne odbiornika oraz maksymalny dystans. VRS zwraca wtedy m.in.:
+Domyślny użytkownik:
 
-- `Dst` — odległość w km
-- `Brng` — bearing od pozycji odbiornika
-- `Spd` — ground speed w kt
-- `Alt` — wysokość w ft
-- `Trak` — track/heading zależnie od `TrkH`
-- `Call`, `Reg`, `Icao`
-- `Type`, `Mdl`, `Op`, `OpCode`
-- `Species`, `Engines`, `EngType`
-- `Sqk`
-- `totalAc`
-- `stm` — czas serwera UTC w ms
+```text
+admin
+```
+
+Przed normalnym użyciem zmień `OTA_PASSWORD` w kodzie.
+
+## Home Assistant / MQTT
+
+v16 obsługuje MQTT oraz **Home Assistant MQTT Discovery**. Po włączeniu MQTT w panelu WWW i podaniu danych brokera Home Assistant może automatycznie utworzyć encje.
+
+Publikowane są m.in.: callsign, rejestracja, model, operator, odległość, trend, prędkość, Flight Level, heading, bearing, ICAO, squawk, trasa, liczba samolotów VRS, status VRS oraz aktualne linie LCD.
+
+Home Assistant otrzymuje również sterowanie:
+
+- **Display Profile**
+- **LCD Mode**
+
+## Profile wyświetlania
+
+| Profil | Zastosowanie |
+|---|---|
+| `CUSTOM` | używa indywidualnych checkboxów ekranów z WWW |
+| `NORMAL` | zbalansowany zestaw informacji do codziennego użycia |
+| `MINIMAL` | model, odległość i prędkość |
+| `SPOTTER` | call/reg, położenie, ICAO/squawk i trasa |
+| `FULL` | wszystkie dostępne ekrany |
 
 ## Ekrany LCD
 
-Po animacji **NOWY NAJBLIŻSZY** ekrany mogą wyglądać tak:
+Po animacji **NOWY NAJBLIZSZY** v16 może wyświetlać 9 ekranów:
 
-```text
-Airbus A321-251N
-   Wizz Air
-```
+1. model / operator
+2. callsign / registration
+3. species / engines
+4. distance / incoming-outgoing
+5. speed / Flight Level
+6. heading / bearing
+7. ICAO / squawk
+8. trasa
+9. liczba samolotów VRS
 
-```text
- CALL: WZZ123
- REG: HA-LXY
-```
+Długie nazwy modelu i trasy są przewijane.
 
-```text
-   LANDPLANE
-      2 JET
-```
+## Dane VRS
 
-```text
- DIST: 12.4 km
-    INCOMING
-```
-
-```text
-907km/h (490kt)
-     FL370
-```
-
-```text
-   HDG 305 NW
-    BRG 267 W
-```
-
-```text
- ICAO: 471F9A
- SQUAWK: 4721
-```
-
-```text
-  SAMOLOTY VRS
-       146
-```
-
-Długie nazwy modelu są przewijane na LCD 16×2.
-
-## LPR
-
-Alarm LPR jest uruchamiany, gdy nowy najbliższy statek powietrzny zostanie rozpoznany na podstawie m.in.:
-
-- `OpCode == "LPR"`
-- callsign rozpoczynającego się od `LPR`
-- nazwy operatora zawierającej `LOTNICZE POGOTOWIE RATUNKOWE`
-- nazwy operatora zawierającej `POLISH MEDICAL AIR RESCUE`
-
-LCD wyświetla pierwszy ekran i miga podświetleniem określoną liczbę razy.
-
-## Wygaszanie nocne
-
-Domyślnie:
-
-```text
-OFF: 21:00
-ON : 06:00
-```
-
-ESP8266 nadal pobiera dane i śledzi samoloty — wyłączane jest tylko podświetlenie LCD. Czas jest synchronizowany z polem `stm` zwracanym przez VRS, a czas polski jest wyliczany z obsługą CET/CEST.
+Firmware wykorzystuje m.in. pola `Dst`, `Brng`, `Spd`, `SpdTyp`, `Alt`, `Trak`, `TrkH`, `Call`, `Reg`, `Icao`, `Type`, `Mdl`, `Op`, `OpCode`, `Species`, `Engines`, `EngType`, `Sqk`, `From`, `Stops`, `To`, `totalAc` i `stm`.
 
 ## Bezpieczeństwo
 
-Nie publikuj prawdziwego SSID ani hasła Wi‑Fi w repozytorium. Przed commitem zawsze sprawdź:
-
-```cpp
-const char* WIFI_SSID = "YOUR_WIFI_SSID";
-const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
-```
+Nie publikuj prawdziwego SSID, hasła Wi‑Fi, hasła OTA ani danych MQTT w repozytorium. Publiczna wersja firmware powinna używać wartości przykładowych/placeholderów.
 
 ## Struktura repozytorium
 
 ```text
 ADSB-LCD-ESP8266/
 ├── README.md
+├── CHANGELOG.md
 ├── .gitignore
 ├── docs/
-│   └── wiring.svg
+│   └── wiring.png
 └── firmware/
-    └── ADSB_LCD_Display/
-        └── ADSB_LCD_Display.ino
+    ├── ADSB_LCD_Display/
+    │   └── ADSB_LCD_Display.ino
+    └── releases/
+        └── v14.1/
+            └── ADSB_LCD_Display_v14.1.ino
 ```
 
 ## Status
